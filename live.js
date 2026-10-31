@@ -1,0 +1,82 @@
+/* Terrapedia live data: pulls fresh facts from public, CORS-enabled APIs.
+   Sources: REST Countries (country facts) and Wikipedia (summaries + search).
+      Everything fails quietly, so the offline data.js entries always still work. */
+      (function () {
+        const cache = {};
+          const fmt = (n) => (typeof n === "number" ? n.toLocaleString() : n);
+
+            async function getJSON(url) {
+                if (cache[url]) return cache[url];
+                    const r = await fetch(url);
+                        if (!r.ok) throw new Error(r.status + " " + url);
+                            return (cache[url] = await r.json());
+                              }
+
+                                async function country(name) {
+                                    const f = "name,capital,population,area,languages,currencies,region,subregion,flags";
+                                        try {
+                                              const d = await getJSON(
+                                                      "https://restcountries.com/v3.1/name/" + encodeURIComponent(name) + "?fullText=true&fields=" + f
+                                                            );
+                                                                  const c = d[0];
+                                                                        return {
+                                                                                Capital: (c.capital || []).join(", "),
+                                                                                        Population: fmt(c.population),
+                                                                                                Area: fmt(c.area) + " km²",
+                                                                                                        Languages: Object.values(c.languages || {}).join(", "),
+                                                                                                                Currency: Object.values(c.currencies || {}).map((x) => x.name).join(", "),
+                                                                                                                        Region: [c.subregion, c.region].filter(Boolean).join(", "),
+                                                                                                                                flag: c.flags && c.flags.png,
+                                                                                                                                      };
+                                                                                                                                          } catch (e) { return null; }
+                                                                                                                                            }
+
+                                                                                                                                              async function wiki(title) {
+                                                                                                                                                  try {
+                                                                                                                                                        const d = await getJSON(
+                                                                                                                                                                "https://en.wikipedia.org/api/rest_v1/page/summary/" + encodeURIComponent(title.replace(/ /g, "_"))
+                                                                                                                                                                      );
+                                                                                                                                                                            if (d.type === "disambiguation") return null;
+                                                                                                                                                                                  return { text: d.extract, url: d.content_urls && d.content_urls.desktop.page, img: d.thumbnail && d.thumbnail.source };
+                                                                                                                                                                                      } catch (e) { return null; }
+                                                                                                                                                                                        }
+
+                                                                                                                                                                                          // Live search for questions your local data.js can't answer.
+                                                                                                                                                                                            async function search(q) {
+                                                                                                                                                                                                try {
+                                                                                                                                                                                                      const d = await getJSON(
+                                                                                                                                                                                                              "https://en.wikipedia.org/w/api.php?action=query&list=search&format=json&origin=*&srlimit=5&srsearch=" +
+                                                                                                                                                                                                                        encodeURIComponent(q)
+                                                                                                                                                                                                                              );
+                                                                                                                                                                                                                                    return d.query.search.map((s) => ({
+                                                                                                                                                                                                                                            title: s.title,
+                                                                                                                                                                                                                                                    snippet: s.snippet.replace(/<[^>]+>/g, ""),
+                                                                                                                                                                                                                                                            url: "https://en.wikipedia.org/wiki/" + encodeURIComponent(s.title.replace(/ /g, "_")),
+                                                                                                                                                                                                                                                                  }));
+                                                                                                                                                                                                                                                                      } catch (e) { return []; }
+                                                                                                                                                                                                                                                                        }
+
+                                                                                                                                                                                                                                                                          // Fills `el` with a "Live data" box for an entry.
+                                                                                                                                                                                                                                                                            async function render(entry, el) {
+                                                                                                                                                                                                                                                                                const name = entry.name || entry.title;
+                                                                                                                                                                                                                                                                                    el.innerHTML = '<div class="live-box"><em>Loading live data…</em></div>';
+                                                                                                                                                                                                                                                                                        const [c, w] = await Promise.all([country(name), wiki(name)]);
+                                                                                                                                                                                                                                                                                            if (!c && !w) { el.innerHTML = ""; return; }
+                                                                                                                                                                                                                                                                                                let h = '<div class="live-box"><h3>Live data</h3>';
+                                                                                                                                                                                                                                                                                                    if (c && c.flag) h += '<img src="' + c.flag + '" alt="" style="height:40px;border-radius:4px">';
+                                                                                                                                                                                                                                                                                                        if (w && w.text) h += "<p>" + w.text + "</p>";
+                                                                                                                                                                                                                                                                                                            if (c) {
+                                                                                                                                                                                                                                                                                                                  h += "<ul>";
+                                                                                                                                                                                                                                                                                                                        for (const k of ["Capital", "Population", "Area", "Languages", "Currency", "Region"])
+                                                                                                                                                                                                                                                                                                                                if (c[k]) h += "<li><b>" + k + ":</b> " + c[k] + "</li>";
+                                                                                                                                                                                                                                                                                                                                      h += "</ul>";
+                                                                                                                                                                                                                                                                                                                                          }
+                                                                                                                                                                                                                                                                                                                                              h += '<small>Fetched ' + new Date().toLocaleString() + " from ";
+                                                                                                                                                                                                                                                                                                                                                  h += [c && "REST Countries", w && '<a href="' + w.url + '" target="_blank" rel="noopener">Wikipedia</a>']
+                                                                                                                                                                                                                                                                                                                                                        .filter(Boolean).join(" and ") + ".</small></div>";
+                                                                                                                                                                                                                                                                                                                                                            el.innerHTML = h;
+                                                                                                                                                                                                                                                                                                                                                              }
+
+                                                                                                                                                                                                                                                                                                                                                                window.TerrapediaLive = { render, search, country, wiki };
+                                                                                                                                                                                                                                                                                                                                                                })();
+                                                                                                                                                                                                                                                                                                                                                                
