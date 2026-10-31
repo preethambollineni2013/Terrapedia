@@ -4,7 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Terrapedia, powered by Chronos</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cesium@1.120.0/Build/Cesium/Widgets/widgets.css">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -14,7 +13,7 @@
 <div id="ui">
 <header>
   <h1>Terrapedia</h1>
-  <p>Countries, former states and history. Answers by Chronos, an AI that runs in your browser with no API.</p>
+  <p class="by">Powered by Chronos</p>
   <div class="bar">
     <input id="q" type="search" placeholder="Ask anything: capital of Japan, when did the Berlin Wall fall, India vs Brazil" autocomplete="off">
     <div id="sug"></div>
@@ -23,11 +22,12 @@
 </header>
 <main id="out"></main>
 <footer>
-  <div class="c">&copy; 2026 Terrapedia</div>
-  <div class="b">Built by Preetham</div>
+  <span class="c">&copy; 2026 Terrapedia</span>
+  <span class="sep">&middot;</span>
+  <span class="b">Built by Preetham</span>
 </footer>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/cesium@1.120.0/Build/Cesium/Cesium.js"></script>
+<!-- Cesium (the globe library) is loaded by globe.js, which falls back to a second CDN if the first fails -->
 <script src="data.js"></script>
 <script src="sources.js"></script>
 <script src="search.js"></script>

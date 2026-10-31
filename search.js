@@ -282,10 +282,14 @@ const Chronos = (function () {
     const found = [];
 
     nameTable.forEach(function (row) {
-      let spot = -1;
+      let spot = -1, end = -1;
       row.names.forEach(function (name) {
         const at = text.indexOf(" " + name + " ");
-        if (at >= 0 && (spot < 0 || at < spot)) spot = at;
+        // keep the earliest hit; on a tie keep the longer name
+        if (at >= 0 && (spot < 0 || at < spot || (at === spot && at + name.length + 2 > end))) {
+          spot = at;
+          end = at + name.length + 2;
+        }
       });
       if (spot < 0) {
         // fuzzy: a single-word name written with one slip, like "japn" or "brazl"
@@ -294,16 +298,24 @@ const Chronos = (function () {
           row.names.forEach(function (name) {
             if (name.indexOf(" ") < 0 && name.length >= 5 && editDistance(token, name) <= 1) {
               const at = text.indexOf(" " + token + " ");
-              if (at >= 0 && (spot < 0 || at < spot)) spot = at;
+              if (at >= 0 && (spot < 0 || at < spot)) { spot = at; end = at + token.length + 2; }
             }
           });
         });
       }
-      if (spot >= 0) found.push({ entry: row.entry, spot: spot });
+      if (spot >= 0) found.push({ entry: row.entry, spot: spot, end: end });
     });
 
-    found.sort(function (a, b) { return a.spot - b.spot; });
-    return found.map(function (f) { return f.entry; });
+    // A longer name swallows the shorter names inside it: "austria hungary" is Austria-Hungary,
+    // not also Austria and Hungary, and "tsarist russia" is the Russian Empire, not Russia.
+    const kept = found.filter(function (a) {
+      return !found.some(function (b) {
+        return b !== a && b.spot <= a.spot && b.end >= a.end && (b.end - b.spot) > (a.end - a.spot);
+      });
+    });
+
+    kept.sort(function (a, b) { return a.spot - b.spot; });
+    return kept.map(function (f) { return f.entry; });
   }
 
   function scoreEntry(item, weights) {
@@ -621,7 +633,8 @@ const Chronos = (function () {
         let best = 9;
         row.names.forEach(function (name) {
           let rank = 9;
-          if (name.indexOf(text) === 0) rank = 0;
+          if (name === text) rank = -1;                 // exact name first: "hungary" before "austria hungary"
+          else if (name.indexOf(text) === 0) rank = 0;
           else if (name.indexOf(text) >= 0) rank = 1;
           else if (text.length > 3 && editDistance(text, name.slice(0, text.length)) <= 1) rank = 2;
           if (rank < best) best = rank;
