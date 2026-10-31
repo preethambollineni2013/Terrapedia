@@ -1,0 +1,205 @@
+// app.js
+// The page itself: reads the search box, asks Chronos, draws the results.
+// Search logic lives in search.js. Source providers live in sources.js.
+
+const output = document.querySelector("#out");
+const box = document.querySelector("#q");
+const suggestions = document.querySelector("#sug");
+const chips = document.querySelectorAll("#chips button");
+
+let currentType = "all"; // all, country, former, history or sources
+let activeSuggestion = -1;
+
+function escapeHtml(text) {
+  return String(text).replace(/[&<>"']/g, function (c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+  });
+}
+
+function typeLabel(entry) {
+  return { country: "Country", former: "Former state", history: "History" }[entry.type];
+}
+
+function cardHtml(entry, why) {
+  return '<div class="card" data-id="' + entry.id + '">' +
+    "<h3>" + entry.name + "</h3>" +
+    '<div class="meta">' + typeLabel(entry) + " · " + entry.region + " · " + entry.era + "</div>" +
+    "<p>" + entry.summary + "</p>" +
+    (why && why.length ? '<div class="why">Matched: ' + escapeHtml(why.join(", ")) + "</div>" : "") +
+    "</div>";
+}
+
+function formatYear(year) {
+  return year < 0 ? (-year) + " BCE" : year;
+}
+
+function sourceLine(providers) {
+  if (!providers.length) return "";
+  return '<div class="src">Source: ' + providers.map(Sources.linkHtml).join(", ") + "</div>";
+}
+
+function wireCards() {
+  output.querySelectorAll(".card").forEach(function (card) {
+    card.onclick = function () { showEntry(card.dataset.id); };
+  });
+}
+
+function closeSuggestions() {
+  suggestions.innerHTML = "";
+  activeSuggestion = -1;
+}
+
+// ---------- sources page ----------
+
+function showSources() {
+  const rows = Sources.directory().map(function (p) {
+    return '<div class="card prov"><h3>' + Sources.linkHtml(p) + "</h3>" +
+      '<div class="meta">' + p.kind + "</div>" +
+      "<p>" + p.covers + "</p>" +
+      '<div class="meta">Used for: ' + p.entries.join(", ") + "</div></div>";
+  }).join("");
+
+  output.innerHTML =
+    '<p class="meta">Every answer and entry names the providers behind it. ' +
+    "Figures are rounded and can lag the latest releases, so check the provider for current numbers.</p>" + rows;
+}
+
+// ---------- results list ----------
+
+function showResults() {
+  if (currentType === "sources") { showSources(); return; }
+
+  const question = box.value.trim();
+
+  if (!question) {
+    const all = DATA.filter(function (e) { return currentType === "all" || e.type === currentType; });
+    output.innerHTML = '<p class="meta">' + all.length + " entries. Try a country, an era or a question.</p>" +
+      all.map(function (e) { return cardHtml(e); }).join("");
+    wireCards();
+    return;
+  }
+
+  const direct = Chronos.answer(question, currentType);
+  const matches = Chronos.search(question, currentType);
+  const fixed = Chronos.didYouMean(question);
+
+  let html = "";
+  if (fixed) {
+    html += '<p class="dym">Showing results for <a href="#" data-fix="' + escapeHtml(fixed) + '">' +
+      escapeHtml(fixed) + "</a></p>";
+  }
+  if (direct) {
+    html += '<div class="ans">' + direct.html + sourceLine(Sources.cite(direct.used)) + "</div>";
+  }
+  if (matches.length) {
+    html += matches.map(function (m) { return cardHtml(m.entry, m.why); }).join("");
+  } else if (!direct) {
+    html += "<p>No match for that. Try a country or event name, a year like 1945, or a question like \"capital of Kenya\".</p>";
+  }
+
+  output.innerHTML = html;
+  const fix = output.querySelector("[data-fix]");
+  if (fix) fix.onclick = function (e) { e.preventDefault(); box.value = fix.dataset.fix; showResults(); };
+  wireCards();
+}
+
+// ---------- single entry page ----------
+
+function showEntry(id) {
+  const entry = DATA.find(function (e) { return e.id === id; });
+  closeSuggestions();
+
+  const related = DATA.filter(function (other) {
+    return other !== entry && other.tags.some(function (t) { return entry.tags.indexOf(t) >= 0; });
+  }).slice(0, 3);
+
+  const facts = Object.entries(entry.facts).map(function (pair) {
+    return "<dt>" + pair[0].replace(/_/g, " ") + "</dt><dd>" + pair[1] + "</dd>";
+  }).join("");
+
+  const timeline = entry.timeline.map(function (event) {
+    return "<li><span>" + formatYear(event[0]) + "</span>" + event[1] + "</li>";
+  }).join("");
+
+  const tags = entry.tags.map(function (t) { return "<span>" + t + "</span>"; }).join("");
+
+  const providers = Sources.forEntry(entry).map(function (p) {
+    return "<li>" + Sources.linkHtml(p) + ' <span class="meta">' + p.covers + "</span></li>";
+  }).join("");
+
+  const caution = entry.type === "former"
+    ? '<p class="meta">Dissolved states have no live statistics. Figures are historical estimates tied to the year shown, and sources can differ.</p>'
+    : "";
+
+  output.innerHTML =
+    '<button class="back">Back to results</button>' +
+    '<article class="entry">' +
+      "<h2>" + entry.name + "</h2>" +
+      '<div class="meta">' + typeLabel(entry) + " · " + entry.region + " · " + entry.era + "</div>" +
+      "<h4>Summary</h4><p>" + entry.summary + "</p>" +
+      "<h4>Key facts</h4><dl>" + facts + "</dl>" + caution +
+      "<h4>Timeline</h4><ol>" + timeline + "</ol>" +
+      '<h4>Related topics</h4><div class="tags">' + tags + "</div>" +
+      '<h4>Sources</h4><ul class="srclist">' + providers + "</ul>" +
+      (related.length ? "<h4>See also</h4>" + related.map(function (e) { return cardHtml(e); }).join("") : "") +
+    "</article>";
+
+  output.querySelector(".back").onclick = showResults;
+  output.querySelectorAll(".tags span").forEach(function (tag) {
+    tag.onclick = function () { box.value = tag.textContent; showResults(); };
+  });
+  wireCards();
+}
+
+// ---------- suggestions ----------
+
+function renderSuggestions() {
+  const list = currentType === "sources" ? [] : Chronos.suggest(box.value);
+  activeSuggestion = -1;
+  suggestions.innerHTML = list.map(function (entry) {
+    return '<div data-id="' + entry.id + '">' + entry.name + "<small>" + typeLabel(entry) + "</small></div>";
+  }).join("");
+  suggestions.querySelectorAll("div").forEach(function (row) {
+    row.onclick = function () { showEntry(row.dataset.id); };
+  });
+}
+
+function moveSuggestion(step) {
+  const rows = suggestions.querySelectorAll("div");
+  if (!rows.length) return;
+  activeSuggestion = (activeSuggestion + step + rows.length) % rows.length;
+  rows.forEach(function (row, i) { row.classList.toggle("act", i === activeSuggestion); });
+}
+
+// ---------- events ----------
+
+box.oninput = function () {
+  showResults();
+  renderSuggestions();
+};
+
+box.onkeydown = function (event) {
+  if (event.key === "ArrowDown") { event.preventDefault(); moveSuggestion(1); }
+  else if (event.key === "ArrowUp") { event.preventDefault(); moveSuggestion(-1); }
+  else if (event.key === "Escape") { closeSuggestions(); }
+  else if (event.key === "Enter") {
+    const rows = suggestions.querySelectorAll("div");
+    if (activeSuggestion >= 0 && rows[activeSuggestion]) showEntry(rows[activeSuggestion].dataset.id);
+    else closeSuggestions();
+  }
+};
+
+document.addEventListener("click", function (event) {
+  if (!event.target.closest(".bar")) closeSuggestions();
+});
+
+chips.forEach(function (chip) {
+  chip.onclick = function () {
+    currentType = chip.dataset.t;
+    chips.forEach(function (c) { c.classList.toggle("on", c === chip); });
+    closeSuggestions();
+    showResults();
+  };
+});
+
+showResults();

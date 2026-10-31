@@ -1,0 +1,57 @@
+:root{--bg:#0c1a26;--panel:rgba(10,22,33,.74);--solid:#13283a;--line:rgba(255,255,255,.22);--tx:#fff;--mut:rgba(255,255,255,.82);--ac:#7fd1c7;--gold:#e3b95a;--fade:1}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{margin:0;background:transparent;color:var(--tx);font:16px/1.6 system-ui,sans-serif;text-shadow:0 1px 6px rgba(0,0,0,.55)}
+header{padding:2.5rem 1.2rem 1rem;max-width:760px;margin:auto}
+h1{font:700 2.6rem/1.1 Georgia,serif;margin:0 0 .4rem;letter-spacing:-.02em}
+header p{color:var(--mut);margin:0 0 1.2rem}
+.bar{position:relative}
+#q{width:100%;padding:.9rem 1rem;font-size:1rem;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--tx)}
+#q:focus,button:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+#sug{position:absolute;left:0;right:0;top:100%;background:var(--solid);border:1px solid var(--line);border-radius:10px;margin-top:4px;z-index:5;overflow:hidden}
+#sug div{padding:.6rem 1rem;cursor:pointer}#sug div:hover{background:var(--line)}
+#sug small{color:var(--mut);margin-left:.5rem}
+nav{display:flex;gap:.5rem;margin-top:.9rem}
+nav button{background:rgba(10,22,33,.6);border:1px solid var(--line);color:var(--mut);padding:.35rem .9rem;border-radius:99px;cursor:pointer}
+nav button.on{background:var(--ac);color:#06202a;border-color:var(--ac)}
+main{max-width:760px;margin:auto;padding:0 1.2rem 3rem}
+.ans{border-left:4px solid var(--gold);background:var(--panel);padding:1rem 1.2rem;border-radius:0 10px 10px 0;margin:1rem 0}
+.ans b{color:var(--gold)}
+.card{border:1px solid var(--line);border-radius:10px;padding:1rem 1.2rem;margin:.8rem 0;cursor:pointer;background:var(--panel)}
+.card:hover{border-color:var(--ac)}
+.card h3,.entry h2{font-family:Georgia,serif;margin:0 0 .2rem}
+.meta{color:var(--mut);font-size:.9rem}
+.entry{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:1.4rem}
+.entry h4{margin:1.4rem 0 .4rem;color:var(--ac)}
+dl{display:grid;grid-template-columns:max-content 1fr;gap:.3rem 1.2rem;margin:0}
+dt{color:var(--mut)}dd{margin:0}
+ol{padding-left:0;list-style:none;margin:0}
+ol li{display:flex;gap:1rem;padding:.3rem 0;border-bottom:1px solid var(--line)}
+ol li span{min-width:5.5rem;color:var(--gold);font-weight:600}
+.tags span{display:inline-block;border:1px solid var(--line);border-radius:99px;padding:0 .7rem;margin:0 .4rem .4rem 0;font-size:.85rem;cursor:pointer}
+.back{background:none;border:0;color:var(--ac);cursor:pointer;padding:0;margin-bottom:.8rem;font-size:1rem}
+table{width:100%;border-collapse:collapse}td,th{padding:.4rem;border-bottom:1px solid var(--line);text-align:left}
+footer{background:rgba(0,0,0,.6);text-align:center;padding:3rem 1rem}
+.c{font:700 clamp(1.6rem,6vw,3rem)/1.2 Georgia,serif}
+.b{font-weight:700;margin-top:.6rem}
+#sug div.act{background:var(--line)}
+.why{color:var(--mut);font-size:.85rem}
+.dym{color:var(--mut);margin:1rem 0 0}
+.dym a{color:var(--ac)}
+.src{margin-top:.7rem;padding-top:.5rem;border-top:1px solid var(--line);color:var(--mut);font-size:.85rem}
+.src a,.srclist a,.prov h3 a{color:var(--ac)}
+.ans small{color:var(--mut)}
+.srclist{margin:0;padding-left:1.1rem}
+.prov{cursor:default}
+.prov:hover{border-color:var(--line)}
+
+/* ---- earth background ---- */
+#globe{position:fixed;inset:0;z-index:0;background:var(--bg)}
+#globe .cesium-viewer,#globe .cesium-viewer-cesiumWidgetContainer,#globe .cesium-widget,#globe canvas{width:100%;height:100%}
+#globe .cesium-widget-credits{display:none}
+#ui{position:relative;z-index:1;transition:opacity .4s}
+html.globe-mode #ui{opacity:0;pointer-events:none}
+.card,.entry,.ans,#q{backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+#hint{position:fixed;top:.8rem;left:50%;transform:translateX(-50%);z-index:3;max-width:90vw;text-align:center;font-size:.85rem;background:rgba(10,22,33,.72);border:1px solid var(--line);border-radius:99px;padding:.3rem .9rem;pointer-events:none}
+#hint[hidden]{display:none}
+#attrib{position:fixed;left:.8rem;bottom:.5rem;z-index:3;font-size:.72rem;color:#fff;text-shadow:0 1px 4px #000;pointer-events:none}

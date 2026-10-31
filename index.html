@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Terrapedia, powered by Chronos</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cesium@1.120.0/Build/Cesium/Widgets/widgets.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="globe" aria-hidden="true"></div>
+<div id="hint" hidden></div>
+<div id="attrib">Imagery &copy; Esri, Maxar, Earthstar Geographics &middot; Globe by CesiumJS</div>
+<div id="ui">
+<header>
+  <h1>Terrapedia</h1>
+  <p>Countries, former states and history. Answers by Chronos, an AI that runs in your browser with no API.</p>
+  <div class="bar">
+    <input id="q" type="search" placeholder="Ask anything: capital of Japan, when did the Berlin Wall fall, India vs Brazil" autocomplete="off">
+    <div id="sug"></div>
+  </div>
+  <nav id="chips"><button data-t="all" class="on">All</button><button data-t="country">Countries</button><button data-t="former">Former states</button><button data-t="history">History</button><button data-t="sources">Sources</button></nav>
+</header>
+<main id="out"></main>
+<footer>
+  <div class="c">&copy; 2026 Terrapedia</div>
+  <div class="b">Built by Preetham</div>
+</footer>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/cesium@1.120.0/Build/Cesium/Cesium.js"></script>
+<script src="data.js"></script>
+<script src="sources.js"></script>
+<script src="search.js"></script>
+<script src="app.js"></script>
+<script src="earth-mode.js"></script>
+<script src="globe.js"></script>
+</body>
+</html>
