@@ -47,7 +47,7 @@ The globe needs internet access for the Cesium library and the satellite imagery
 | `earth-mode.js` | The Easter egg logic (go read it) |
 | `globe.js` | The Earth background: loads CesiumJS and satellite imagery, with fallbacks and error recovery |
 
-## Adding an entry
+## Adding an entry (If You Want)
 
 Open `data.js` and add a line using one of three helpers: `C` (country), `F` (former state) or `H` (history).
 
