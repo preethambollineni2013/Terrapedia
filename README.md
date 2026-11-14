@@ -6,8 +6,6 @@ Terrapedia is an interactive encyclopedia about countries and history. When you 
 
 <img width="1381" height="736" alt="Capture" src="https://github.com/user-attachments/assets/648247ee-2dc0-4322-9074-64f7b62407f4" />
 
-<img width="1381" height="736" alt="Capture" src=
-
 ## What It Does
 * **Smart Summaries:** Searches different sources for the country or historical topic you look up and summarizes the facts using Chronos.
 * **3D Globe:** Lets you explore locations visually right in your browser.
